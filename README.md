@@ -13,7 +13,13 @@ $ node convert.js schemas
 4. Then, put the cursor to the next "mongoose.Schema.Types.String" string and press `.` to repeat the last command.
 
 5. Remove redundant schema definitions, including
+
    - Permission
    - Role
    - Token
    - User
+
+6. Manual checks
+
+- Add `refs` to options object as needed
+- Remove `required` from options object as needed

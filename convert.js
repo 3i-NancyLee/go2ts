@@ -86,12 +86,14 @@ export type ${structName}Document = ${structName} & mongoose.Document<string>;
   },
 })
 class ${structName} {
+  id: string;
+
   ${Object.entries(instance.create())
     .map(([name, options]) => {
       if (name === "_id") {
         return `@Prop({ type: mongoose.Schema.Types.String, default: uuid, hide: true })
   @Exclude()
-_id: string;\n`;
+  _id: string;\n`;
       } else if (
         (name.toLowerCase() === "createdat") |
         (name.toLowerCase() === "updatedat")
@@ -100,7 +102,7 @@ _id: string;\n`;
   ${name}: Date;\n`;
       } else {
         return `@Prop(${formatOptions({ ...options })})\n  ${name}: ${
-          ["Duration", "float32", "float64"].includes(
+          ["Duration", "float32", "float64", "int64", "uint64"].includes(
             instance.create()[name].type
           )
             ? "Number"
