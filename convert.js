@@ -63,7 +63,7 @@ ${structContent}
 // Define the NestJS schema class
 function makeNestSchemaClass(instance, structName) {
   return `
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 
 @Schema({
