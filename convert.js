@@ -25,8 +25,11 @@ function formatOptions(options) {
   const typeMap = {
     string: "String",
     number: "Number",
+    float32: "Number",
+    float64: "Number",
     bool: "Boolean",
     Time: "Date",
+    Duration: "Number",
     array: "Array",
   };
   return JSON.stringify({
@@ -64,7 +67,11 @@ ${structContent}
 function makeNestSchemaClass(instance, structName) {
   return `
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Exclude } from 'class-transformer';
+import { v4 as uuid } from 'uuid';
 import * as mongoose from 'mongoose';
+
+export type ${structName}Document = ${structName} & mongoose.Document<string>;
 
 @Schema({
   id: true,
@@ -80,25 +87,42 @@ import * as mongoose from 'mongoose';
 })
 class ${structName} {
   ${Object.entries(instance.create())
-    .map(
-      ([name, options]) =>
-        `@Prop(${formatOptions({ ...options })})\n  ${name}: ${
-          instance.create()[name].type === "Time"
+    .map(([name, options]) => {
+      if (name === "_id") {
+        return `@Prop({ type: mongoose.Schema.Types.String, default: uuid, hide: true })
+  @Exclude()
+_id: string;\n`;
+      } else if (
+        (name.toLowerCase() === "createdat") |
+        (name.toLowerCase() === "updatedat")
+      ) {
+        return `@Prop()
+  ${name}: Date;\n`;
+      } else {
+        return `@Prop(${formatOptions({ ...options })})\n  ${name}: ${
+          ["Duration", "float32", "float64"].includes(
+            instance.create()[name].type
+          )
+            ? "Number"
+            : instance.create()[name].type === "Time"
             ? "Date"
+            : instance.create()[name].type === "bool"
+            ? "boolean"
             : instance.create()[name].type
-        };\n`
-    )
+        };\n`;
+      }
+    })
     .join("\n  ")}
 }
 
-const ${structName}Schema = SchemaFactory.createForClass(${structName});
+const ${structName}Schema = SchemaFactory.createForClass<${structName}, ${structName}Document>(${structName});
 
 export { ${structName}Schema, ${structName} };
 `;
 }
 
 function writeToFile(destDir, structName, schemaClass) {
-  const destFilePath = `${destDir}/${structName.toLowerCase()}.schemas.ts`;
+  const destFilePath = `${destDir}/${structName.toLowerCase()}.schema.ts`;
   fs.writeFileSync(destFilePath, schemaClass);
   console.log("Saved to dest dir: ", destFilePath);
 }
